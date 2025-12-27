@@ -2,7 +2,7 @@ plugins {
     // FIX: Change 8.1.1 -> 8.2.1 to match your other file
     id("com.android.application") version "8.2.1" apply false
     id("com.android.library") version "8.2.1" apply false
-    id("org.jetbrains.kotlin.android") version "1.8.22" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.23" apply false
 }
 
 allprojects {
