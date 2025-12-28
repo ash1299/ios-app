@@ -5,7 +5,6 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
-    // RESTORED: This is required for Firebase to work
     id("com.google.gms.google-services")
 }
 
@@ -31,7 +30,6 @@ android {
         versionName = flutter.versionName
     }
 
-    // RESTORED: Load your real release key from key.properties
     signingConfigs {
         create("release") {
             val keyPropertiesFile = rootProject.file("key.properties")
@@ -44,28 +42,37 @@ android {
             keyPassword = props.getProperty("keyPassword")
             storeFile = props.getProperty("storeFile")?.let { file(it) }
             storePassword = props.getProperty("storePassword")
+            
+            // --- FIX 1: ENABLE SIGNING FOR INSTALLATION ---
+            enableV1Signing = true
+            enableV2Signing = true
         }
     }
 
     buildTypes {
         release {
-            // RESTORED: Use the release key, NOT the debug key
             signingConfig = signingConfigs.getByName("release")
-            // Enable minification and resource shrinking for production releases.
-            // These are memory-intensive; Gradle JVM heap must be increased (see gradle.properties).
             isMinifyEnabled = true
             isShrinkResources = true
-            // Keep debug-friendly mapping file mapping for troubleshooting if needed
         }
     }
 
-// Ensure Flutter tooling can find the output APK produced by Gradle.
-// Some Flutter versions expect the APK under <root>/build/app/outputs/flutter-apk/.
-// Add a small task to copy the release APK after assembleRelease so Flutter's lookup succeeds.
+    // --- FIX 2: FORCE STABLE DEPENDENCIES FOR BUILD ---
+    configurations.all {
+        resolutionStrategy {
+            force("androidx.browser:browser:1.8.0")
+            force("androidx.core:core:1.15.0")
+            force("androidx.core:core-ktx:1.15.0")
+        }
+    }
+}
+
+// Ensure Flutter can find the APK
 tasks.register("copyReleaseApk") {
     doLast {
         val apkFile = file("${project.buildDir}/outputs/apk/release/app-release.apk")
-        val destDir = file("${rootProject.buildDir}/app/outputs/flutter-apk/")
+        val repoRoot = projectDir.parentFile.parentFile 
+        val destDir = file("${repoRoot.absolutePath}/build/app/outputs/flutter-apk/")
         if (apkFile.exists()) {
             destDir.mkdirs()
             copy {
@@ -79,10 +86,8 @@ tasks.register("copyReleaseApk") {
     }
 }
 
-// Some AGP versions create tasks lazily; configure the copy task to finalize any existing or future assembleRelease task
 tasks.matching { it.name == "assembleRelease" }.configureEach {
     finalizedBy("copyReleaseApk")
-}
 }
 
 flutter {
@@ -90,6 +95,5 @@ flutter {
 }
 
 dependencies {
-    // RESTORED: Firebase dependencies
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
 }
