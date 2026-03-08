@@ -161,7 +161,14 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
       context: context,
       initialTime: currentStart,
       helpText: "START TIME (Schedule ${index + 1})",
-      builder: (context, child) => Theme(data: AppTheme.darkTheme, child: child!),
+      builder: (context, child) => Theme(
+        data: AppTheme.darkTheme, 
+        // THIS FORCES THE CLOCK TO BE 12-HOUR WITH AM/PM!
+        child: MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        ),
+      ),
     );
     if (newStart == null) return;
 
@@ -171,13 +178,21 @@ class _SchedulesScreenState extends State<SchedulesScreen> {
       context: context,
       initialTime: TimeOfDay(hour: (newStart.hour + 1) % 24, minute: newStart.minute),
       helpText: "END TIME (Schedule ${index + 1})",
-      builder: (context, child) => Theme(data: AppTheme.darkTheme, child: child!),
+      builder: (context, child) => Theme(
+        data: AppTheme.darkTheme, 
+        // THIS FORCES THE CLOCK TO BE 12-HOUR WITH AM/PM!
+        child: MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        ),
+      ),
     );
 
     if (newEnd != null) {
       setState(() {
-        mySchedules[index].startTime = newStart.format(context);
-        mySchedules[index].endTime = newEnd.format(context);
+        // THIS FORCES THE TEXT ON SCREEN TO ALWAYS INCLUDE AM/PM!
+        mySchedules[index].startTime = _formatTime(newStart.hour, newStart.minute);
+        mySchedules[index].endTime = _formatTime(newEnd.hour, newEnd.minute);
         mySchedules[index].isEnabled = true; 
       });
       _syncScheduleToDevice(index, mySchedules[index]);
